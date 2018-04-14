@@ -98,7 +98,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="rng.c" />
-    <ClCompile Include="xoroshiro128plus.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rng.h" />

@@ -18,9 +18,6 @@
     <ClCompile Include="rng.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="xoroshiro128plus.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rng.h">
