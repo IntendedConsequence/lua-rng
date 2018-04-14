@@ -1,5 +1,6 @@
 #include <lua.h>
 #include <lauxlib.h>
+#include <stdint.h>
 #include "rng.h"	// TODO: rename
 
 
@@ -10,6 +11,10 @@
 */
 
 // TODO: add declarations
+typedef struct XoroshiroSeed
+{
+	uint64_t s0, s1;
+} XoroshiroSeed;
 
 /*
 ** ===============================================================
@@ -19,60 +24,33 @@
 
 // TODO: add generic code
 
-#ifndef NDEBUG
-//can be found here  http://www.lua.org/pil/24.2.3.html
-static void stackDump (lua_State *L, const char *text) {
-      int i;
-      int top = lua_gettop(L);
-	  if (text == NULL)
-		printf("--------Start Dump------------\n");
-	  else
-	    printf("--------Start %s------------\n", text);
-      for (i = 1; i <= top; i++) {  /* repeat for each level */
-        int t = lua_type(L, i);
-        switch (t) {
-    
-          case LUA_TSTRING:  /* strings */
-            printf("`%s'", lua_tostring(L, i));
-            break;
-    
-          case LUA_TBOOLEAN:  /* booleans */
-            printf(lua_toboolean(L, i) ? "true" : "false");
-            break;
-    
-          case LUA_TNUMBER:  /* numbers */
-            printf("%g", lua_tonumber(L, i));
-            break;
-    
-          default:  /* other values */
-            printf("%s", lua_typename(L, t));
-            break;
-    
-        }
-        printf("  ");  /* put a separator */
-      }
-      printf("\n");  /* end the listing */
-	  printf("--------End Dump------------\n");
-    }
-
-static void tableDump(lua_State *L, int idx, const char* text)
-{
-	lua_pushvalue(L, idx);		// copy target table
-	lua_pushnil(L);
-	  if (text == NULL)
-		printf("--------Table Dump------------\n");
-	  else
-	    printf("--------Table dump: %s------------\n", text);
-	while (lua_next(L,-2) != 0) {
-		printf("%s - %s\n",
-			lua_typename(L, lua_type(L, -2)),
-			lua_typename(L, lua_type(L, -1)));
-		lua_pop(L, 1);
-	}
-	lua_pop(L, 1);	// remove table copy
-    printf("--------End Table dump------------\n");
+static __inline uint64_t rotl(const uint64_t x, int k) {
+	return (x << k) | (x >> (64 - k));
 }
-#endif
+
+uint64_t splitmix(uint64_t x) {
+	uint64_t z = (x += 0x9e3779b97f4a7c15);
+	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
+	z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
+	return z ^ (z >> 31);
+}
+
+void setseed(XoroshiroSeed *seed, uint64_t newseed) {
+	seed->s0 = splitmix(newseed);
+	seed->s1 = splitmix(newseed);
+}
+
+uint64_t next(XoroshiroSeed *seed) {
+	const uint64_t s0 = seed->s0;
+	uint64_t s1 = seed->s1;
+	const uint64_t result = s0 + s1;
+
+	s1 ^= s0;
+	seed->s0 = rotl(s0, 55) ^ s1 ^ (s1 << 14); // a, b
+	seed->s1 = rotl(s1, 36); // c
+
+	return result;
+}
 
 /*
 ** ===============================================================
@@ -80,20 +58,46 @@ static void tableDump(lua_State *L, int idx, const char* text)
 ** ===============================================================
 */
 
-// TODO: example somefunction, add more here
-int L_somefunction(lua_State *L)
+
+int L_newseed(lua_State *L)
 {
-	// TODO: add implementation
-	lua_getglobal(L, "print");
-	lua_pushstring(L, "Now running somefunction...");
-	lua_call(L, 1, 0);
+	size_t nbytes;
+	XoroshiroSeed *seed;
 
-#ifndef NDEBUG
-	stackDump(L, "stack from somefunction()");
-#endif
-
-	return 0;	// number of return values on the Lua stack
+	nbytes = sizeof(XoroshiroSeed);
+	seed = (XoroshiroSeed *)lua_newuserdata(L, nbytes);
+	seed->s0 = 0;
+	seed->s1 = 0;
+	luaL_getmetatable(L, "rng.XoroshiroSeed");
+	lua_setmetatable(L, -2);
+	return 1;	// number of return values on the Lua stack
 };
+
+XoroshiroSeed *checkseed(lua_State *L)
+{
+	void *ud;
+	ud = luaL_checkudata(L, 1, "rng.XoroshiroSeed");
+	luaL_argcheck(L, ud != NULL, 1, "seed expected");
+	return (XoroshiroSeed *)ud;
+}
+
+int L_setseed(lua_State *L)
+{
+	XoroshiroSeed *seed;
+	uint64_t newseed;
+	seed = checkseed(L);
+	newseed = luaL_checkinteger(L, 2);
+	setseed(seed, newseed);
+	return 0;
+}
+
+int L_next(lua_State *L)
+{
+	XoroshiroSeed *seed;
+	seed = checkseed(L);
+	lua_pushnumber(L, (next(seed) >> 11) * (1. / (UINT64_C(1) << 53)));
+	return 1;
+}
 
 
 /*
@@ -102,12 +106,18 @@ int L_somefunction(lua_State *L)
 ** ===============================================================
 */
 
+static const struct luaL_Reg LuaMetatableFunctions[] = {
+	{"setseed", L_setseed},
+	{"next", L_next},
+
+	{NULL,NULL}  // last entry; list terminator
+};
+
 // Structure with all functions made available to Lua
 static const struct luaL_Reg LuaExportFunctions[] = {
 
 	// TODO: add functions from 'exposed Lua API' section above
-	{"somefunction",L_somefunction},		
-
+	{"new",L_newseed},
 
 	{NULL,NULL}  // last entry; list terminator
 };
@@ -116,9 +126,11 @@ static const struct luaL_Reg LuaExportFunctions[] = {
 // On success; return 1
 // On error; push errorstring on stack and return 0
 static int L_openLib(lua_State *L) {
-
-
-
+	luaL_newmetatable(L, "rng.XoroshiroSeed");
+	lua_pushstring(L, "__index");
+	lua_pushvalue(L, -2);
+	lua_settable(L, -3);
+	luaL_openlib(L, NULL, LuaMetatableFunctions, 0);
 	// TODO: add startup/initialization code
 	lua_getglobal(L, "print");
 	lua_pushstring(L, "Now initializing module 'required' as:");
