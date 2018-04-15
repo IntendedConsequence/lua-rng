@@ -28,7 +28,7 @@
     <None Include="readme.md">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="rng-scm-1.rockspec">
+    <None Include="rng-0.2.0-1.rockspec">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

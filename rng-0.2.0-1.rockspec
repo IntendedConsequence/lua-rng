@@ -1,14 +1,15 @@
 package = "rng"
-version = "scm-1"
+version = "0.2.0-1"
 
 source = {
     url = "git://github.com/Tieske/Lua_library_template.git",
 }
 description = {
-   summary = "Lua template for C libraries",
+   summary = "xoroshiro128+ rng for lua",
    detailed = [[
-      Quickly setup a new C library, only a
-      fill-in-the-blanks action is required to run it.
+      A basic implementation of xoroshiro128+ prng algorithm
+      packaged as a Lua module, using splitmix64 to set the seed.
+      Allows creating independent generators with private seeds.
    ]],
    homepage = "https://github.com/Tieske/Lua_library_template",
    license = "MIT"

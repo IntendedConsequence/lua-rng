@@ -104,9 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="rng-scm-1.rockspec" />
+    <None Include="rng-0.2.0-1.rockspec" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
