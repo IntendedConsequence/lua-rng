@@ -1,7 +1,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <stdint.h>
-#include "rng.h"	// TODO: rename
+#include "rng.h"
 
 
 /*
@@ -10,7 +10,6 @@
 ** ===============================================================
 */
 
-// TODO: add declarations
 typedef struct XoroshiroSeed
 {
 	uint64_t s0, s1;
@@ -21,8 +20,6 @@ typedef struct XoroshiroSeed
 **   Generic internal code
 ** ===============================================================
 */
-
-// TODO: add generic code
 
 static __inline uint64_t rotl(const uint64_t x, int k) {
 	return (x << k) | (x >> (64 - k));
@@ -162,8 +159,6 @@ static const struct luaL_Reg LuaMetatableFunctions[] = {
 
 // Structure with all functions made available to Lua
 static const struct luaL_Reg LuaExportFunctions[] = {
-
-	// TODO: add functions from 'exposed Lua API' section above
 	{"new",L_newseed},
 
 	{NULL,NULL}  // last entry; list terminator
