@@ -178,16 +178,6 @@ static int L_openLib(lua_State *L) {
 	lua_pushvalue(L, -2);
 	lua_settable(L, -3);
 	luaL_openlib(L, NULL, LuaMetatableFunctions, 0);
-	// TODO: add startup/initialization code
-	lua_getglobal(L, "print");
-	lua_pushstring(L, "Now initializing module 'required' as:");
-	lua_pushvalue(L, 1); // pos 1 on the stack contains the module name
-	lua_call(L, 2, 0);
-
-
-
-
-
 	return 1;	// report success
 }
 
@@ -196,16 +186,7 @@ static int L_openLib(lua_State *L) {
 // Note: check Lua os.exit() function for exceptions,
 // it will not always be called! Changed from Lua 5.1 to 5.2.
 static int L_closeLib(lua_State *L) {
-
-
 	// TODO: add shutdown/cleanup code
-	lua_getglobal(L, "print");
-	lua_pushstring(L, "Now closing the Lua template library");
-	lua_call(L, 1, 0);
-
-
-
-
 	return 0;
 }
 
