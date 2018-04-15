@@ -1,0 +1,11 @@
+.vs/
+Debug/
+Release/
+/*.opendb
+/*.db
+/*.def
+/*.dll
+/*.exp
+/*.lib
+/*.obj
+/*.pdb
