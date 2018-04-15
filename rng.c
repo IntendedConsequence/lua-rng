@@ -264,7 +264,12 @@ LTLIB_EXPORTAPI	int LTLIB_OPENFUNC (lua_State *L){
 	luaL_register(L, LTLIB_GLOBALNAME, LuaExportFunctions);
 #else
 	luaL_setfuncs (L, LuaExportFunctions, 0);
-#endif        
+#endif
+	lua_newtable(L);
+	lua_pushstring(L, "__call");
+	lua_pushcfunction(L, L_newseed);
+	lua_settable(L, -3);
+	lua_setmetatable(L, -2);
 	return 1;
 };
 
